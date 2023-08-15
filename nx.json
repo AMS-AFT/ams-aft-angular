@@ -1,18 +1,43 @@
 {
-  "extends": "nx/presets/npm.json",
-  "$schema": "./node_modules/nx/schemas/nx-schema.json",
   "tasksRunnerOptions": {
     "default": {
       "runner": "nx-cloud",
       "options": {
-        "cacheableOperations": [
-          "build",
-          "lint",
-          "test",
-          "e2e"
-        ],
-        "accessToken": "NmYxZGFmMTUtNTUzOC00YThhLWFlYmQtNzhjMjc4ZWQzZWEwfHJlYWQtd3JpdGU="
+        "cacheableOperations": [],
+        "accessToken": "ZjJkZjhjMzMtN2Q3Yi00YTQ1LTg0YjUtYzg0NTRkMTRlN2QxfHJlYWQtd3JpdGU="
       }
+    }
+  },
+  "extends": "nx/presets/npm.json",
+  "$schema": "./node_modules/nx/schemas/nx-schema.json",
+  "affected": {
+    "defaultBase": "main"
+  },
+  "generators": {
+    "@nx/angular:application": {
+      "style": "css",
+      "linter": "eslint",
+      "unitTestRunner": "jest",
+      "e2eTestRunner": "none"
+    },
+    "@nx/angular:library": {
+      "linter": "eslint",
+      "unitTestRunner": "jest"
+    },
+    "@nx/angular:component": {
+      "style": "css"
+    }
+  },
+  "targetDefaults": {
+    "test": {
+      "inputs": ["default", "^default", "{workspaceRoot}/jest.preset.js"]
+    },
+    "lint": {
+      "inputs": [
+        "default",
+        "{workspaceRoot}/.eslintrc.json",
+        "{workspaceRoot}/.eslintignore"
+      ]
     }
   }
 }
