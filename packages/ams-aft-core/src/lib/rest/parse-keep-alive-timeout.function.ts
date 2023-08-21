@@ -1,4 +1,4 @@
-import { convertStringToObject } from '../utils';
+import { stringToObject } from '../utils';
 
 /**
  * Returns the Keep-Alive's HTTP header timeout value in miliseconds.
@@ -11,7 +11,7 @@ export function parseKeepAliveTimeout(value?: string | null): number | null {
     return null;
   }
 
-  const timeout = Number(convertStringToObject(value, { properties: ',', values: '=' })['timeout']);
+  const timeout = Number(stringToObject(value, { properties: ',', values: '=' })['timeout']);
 
   return isNaN(timeout) ? null : timeout * 1000;
 }

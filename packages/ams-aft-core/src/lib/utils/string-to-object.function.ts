@@ -2,9 +2,15 @@
  * Converts a key value pairs string to object.
  * @param value The key value pairs string to convert.
  * @param separators The strings that separates properties and values.
- * @returns The key value pairs string as object.
+ * @returns The key value pairs string as object or empty object if invalid separators.
+ * @example
+ * ```js
+ * const value = 'a=0, b=0';
+ * const separators = {properties:',',values:'='};
+ * stringToObject(value, separators); // {a:0,b:0}
+ * ```
  */
-export function convertStringToObject(
+export function stringToObject(
   value: string,
   separators: { properties: string; values: string }
 ): Record<string, string> {
