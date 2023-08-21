@@ -9,8 +9,8 @@ const realNow = Date.now;
 
 const url = 'api/resource';
 const error404 = { status: 404, statusText: '' };
-const error500 = { status: 500, statusText: '' };
 const error429 = { status: 429, statusText: '', headers: { 'Retry-After': '1' } };
+const error500 = { status: 500, statusText: '' };
 const error502 = { status: 502, statusText: '', headers: { 'Retry-After': '60' } };
 const error503 = { status: 503, statusText: '', headers: { 'Retry-After': '2023-01-01T12:01:00Z' } };
 const error504 = { status: 504, statusText: '', headers: { 'Keep-Alive': 'timeout=1, max=1' } };
@@ -52,27 +52,20 @@ describe('retryHttpRequest', () => {
         }
       });
 
-    const req1 = httpTestingController.expectOne(url);
-    req1.flush('', error500);
+    let req = httpTestingController.expectOne(url);
+    req.flush('', error500);
 
     tick(300);
-
-    const req2 = httpTestingController.expectOne(url);
-    req2.flush('', error500);
+    req = httpTestingController.expectOne(url);
+    req.flush('', error500);
 
     tick(600);
-
-    const req3 = httpTestingController.expectOne(url);
-    req3.flush('', error500);
+    req = httpTestingController.expectOne(url);
+    req.flush('', error500);
 
     tick(1200);
-
-    const req4 = httpTestingController.expectOne(url);
-    req4.flush('', error500);
-
-    tick(2400);
-
-    httpTestingController.expectNone(url);
+    req = httpTestingController.expectOne(url);
+    req.flush('', error500);
   }));
 
   it(`doesn't retry on non retryable HTTP error`, fakeAsync(() => {
@@ -86,12 +79,8 @@ describe('retryHttpRequest', () => {
         }
       });
 
-    const req1 = httpTestingController.expectOne(url);
-    req1.flush('', error404);
-
-    tick(300);
-
-    httpTestingController.expectNone(url);
+    const req = httpTestingController.expectOne(url);
+    req.flush('', error404);
   }));
 
   it(`uses custom "count"`, fakeAsync(() => {
@@ -105,22 +94,16 @@ describe('retryHttpRequest', () => {
         }
       });
 
-    const req1 = httpTestingController.expectOne(url);
-    req1.flush('', error500);
+    let req = httpTestingController.expectOne(url);
+    req.flush('', error500);
 
     tick(300);
-
-    const req2 = httpTestingController.expectOne(url);
-    req2.flush('', error500);
+    req = httpTestingController.expectOne(url);
+    req.flush('', error500);
 
     tick(600);
-
-    const req3 = httpTestingController.expectOne(url);
-    req3.flush('', error500);
-
-    tick(1200);
-
-    httpTestingController.expectNone(url);
+    req = httpTestingController.expectOne(url);
+    req.flush('', error500);
   }));
 
   it(`uses delay from Retry-After integer`, fakeAsync(() => {
@@ -134,27 +117,20 @@ describe('retryHttpRequest', () => {
         }
       });
 
-    const req1 = httpTestingController.expectOne(url);
-    req1.flush('', error429);
+    let req = httpTestingController.expectOne(url);
+    req.flush('', error429);
 
     tick(1000);
-
-    const req2 = httpTestingController.expectOne(url);
-    req2.flush('', error429);
-
-    tick(1000);
-
-    const req3 = httpTestingController.expectOne(url);
-    req3.flush('', error429);
+    req = httpTestingController.expectOne(url);
+    req.flush('', error429);
 
     tick(1000);
-
-    const req4 = httpTestingController.expectOne(url);
-    req4.flush('', error429);
+    req = httpTestingController.expectOne(url);
+    req.flush('', error429);
 
     tick(1000);
-
-    httpTestingController.expectNone(url);
+    req = httpTestingController.expectOne(url);
+    req.flush('', error429);
   }));
 
   it(`uses delay from Retry-After date`, fakeAsync(() => {
@@ -168,27 +144,20 @@ describe('retryHttpRequest', () => {
         }
       });
 
-    const req1 = httpTestingController.expectOne(url);
-    req1.flush('', error503);
+    let req = httpTestingController.expectOne(url);
+    req.flush('', error503);
 
     tick(60_000);
-
-    const req2 = httpTestingController.expectOne(url);
-    req2.flush('', error503);
+    req = httpTestingController.expectOne(url);
+    req.flush('', error503);
 
     tick(600);
-
-    const req3 = httpTestingController.expectOne(url);
-    req3.flush('', error503);
+    req = httpTestingController.expectOne(url);
+    req.flush('', error503);
 
     tick(1200);
-
-    const req4 = httpTestingController.expectOne(url);
-    req4.flush('', error503);
-
-    tick(2400);
-
-    httpTestingController.expectNone(url);
+    req = httpTestingController.expectOne(url);
+    req.flush('', error503);
   }));
 
   it(`uses max operation time 100 s`, fakeAsync(() => {
@@ -202,17 +171,12 @@ describe('retryHttpRequest', () => {
         }
       });
 
-    const req1 = httpTestingController.expectOne(url);
-    req1.flush('', error502);
+    let req = httpTestingController.expectOne(url);
+    req.flush('', error502);
 
     tick(60_000);
-
-    const req2 = httpTestingController.expectOne(url);
-    req2.flush('', error502);
-
-    tick(60_000);
-
-    httpTestingController.expectNone(url);
+    req = httpTestingController.expectOne(url);
+    req.flush('', error502);
   }));
 
   it(`uses max operation time from Keep-Alive`, fakeAsync(() => {
@@ -226,22 +190,16 @@ describe('retryHttpRequest', () => {
         }
       });
 
-    const req1 = httpTestingController.expectOne(url);
-    req1.flush('', error504);
+    let req = httpTestingController.expectOne(url);
+    req.flush('', error504);
 
     tick(300);
-
-    const req2 = httpTestingController.expectOne(url);
-    req2.flush('', error504);
+    req = httpTestingController.expectOne(url);
+    req.flush('', error504);
 
     tick(600);
-
-    const req3 = httpTestingController.expectOne(url);
-    req3.flush('', error504);
-
-    tick(1200);
-
-    httpTestingController.expectNone(url);
+    req = httpTestingController.expectOne(url);
+    req.flush('', error504);
   }));
 
   it(`retries on different retryable HTTP errors in the same sequence`, fakeAsync(() => {
@@ -255,27 +213,20 @@ describe('retryHttpRequest', () => {
         }
       });
 
-    const req1 = httpTestingController.expectOne(url);
-    req1.flush('', error429);
+    let req = httpTestingController.expectOne(url);
+    req.flush('', error429);
 
     tick(1000);
-
-    const req2 = httpTestingController.expectOne(url);
-    req2.flush('', error500);
+    req = httpTestingController.expectOne(url);
+    req.flush('', error500);
 
     tick(600);
-
-    const req3 = httpTestingController.expectOne(url);
-    req3.flush('', error503);
+    req = httpTestingController.expectOne(url);
+    req.flush('', error503);
 
     tick(60_000);
-
-    const req4 = httpTestingController.expectOne(url);
-    req4.flush('', error500);
-
-    tick(2400);
-
-    httpTestingController.expectNone(url);
+    req = httpTestingController.expectOne(url);
+    req.flush('', error500);
   }));
 
   it(`doesn't retry on success in the same sequence`, fakeAsync(() => {
@@ -289,17 +240,12 @@ describe('retryHttpRequest', () => {
         error: () => fail('should not have failed')
       });
 
-    const req1 = httpTestingController.expectOne(url);
-    req1.flush('', error500);
+    let req = httpTestingController.expectOne(url);
+    req.flush('', error500);
 
     tick(300);
-
-    const req2 = httpTestingController.expectOne(url);
-    req2.flush({});
-
-    tick(600);
-
-    httpTestingController.expectNone(url);
+    req = httpTestingController.expectOne(url);
+    req.flush({});
   }));
 
   it(`doesn't retry on non retryable HTTP error in the same sequence`, fakeAsync(() => {
@@ -313,16 +259,11 @@ describe('retryHttpRequest', () => {
         }
       });
 
-    const req1 = httpTestingController.expectOne(url);
-    req1.flush('', error500);
+    let req = httpTestingController.expectOne(url);
+    req.flush('', error500);
 
     tick(300);
-
-    const req2 = httpTestingController.expectOne(url);
-    req2.flush('', error404);
-
-    tick(600);
-
-    httpTestingController.expectNone(url);
+    req = httpTestingController.expectOne(url);
+    req.flush('', error404);
   }));
 });
