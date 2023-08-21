@@ -14,7 +14,10 @@
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
-    "paths": {}
+    "paths": {
+      "@ams-aft/core": ["packages/ams-aft-core/src/index.ts"],
+      "@ams-aft/core-angular": ["packages/ams-aft-core-angular/src/index.ts"]
+    }
   },
   "exclude": ["node_modules", "tmp"]
 }

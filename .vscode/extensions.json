@@ -2,7 +2,10 @@
   "recommendations": [
     "nrwl.angular-console",
     "esbenp.prettier-vscode",
-    "firsttris.vscode-jest-runner",
-    "dbaeumer.vscode-eslint"
+    "dbaeumer.vscode-eslint",
+    "Orta.vscode-jest",
+    "sonarsource.sonarlint-vscode",
+    "kisstkondoros.vscode-codemetrics",
+    "firsttris.vscode-jest-runner"
   ]
 }

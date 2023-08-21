@@ -1,0 +1,36 @@
+{
+  "editor.bracketPairColorization.enabled": true,
+  "editor.guides.bracketPairs": "active",
+
+  // esbenp.prettier-vscode
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.formatOnSave": true,
+  "editor.rulers": [120],
+
+  // dbaeumer.vscode-eslint
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": true
+  },
+
+  // kisstkondoros.vscode-codemetrics
+  "codemetrics.basics.ComplexityLevelExtreme": 25,
+  "codemetrics.basics.ComplexityLevelExtremeDescription": "Extreme",
+  "codemetrics.basics.ComplexityLevelHigh": 10,
+  "codemetrics.basics.ComplexityLevelHighDescription": "High",
+  "codemetrics.basics.ComplexityLevelNormal": 5,
+  "codemetrics.basics.ComplexityLevelNormalDescription": "Normal",
+  "codemetrics.basics.ComplexityLevelLow": 0,
+  "codemetrics.basics.ComplexityLevelLowDescription": "Low",
+  "codemetrics.basics.ComplexityTemplate": "{1} complexity: {0}",
+  "codemetrics.basics.DecorationModeEnabled": false,
+  "codemetrics.basics.Exclude": ["**/*.spec.ts"],
+
+  // SonarSource.sonarlint-vscode
+  "sonarlint.analyzerProperties": {
+    "sonar.typescript.exclusions": "**/*.spec.ts,**/test-setup.ts"
+  },
+  "sonarlint.connectedMode.project": {
+    "connectionId": "kuoki-srv",
+    "projectKey": "kuoki-environment"
+  }
+}

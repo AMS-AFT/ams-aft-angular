@@ -1,0 +1,8 @@
+{
+  "name": "@ams-aft/core",
+  "version": "0.0.1",
+  "peerDependencies": {},
+  "main": "./index.js",
+  "module": "./index.mjs",
+  "typings": "./index.d.ts"
+}
