@@ -12,7 +12,7 @@ import { MonoTypeOperatorFunction } from 'rxjs';
 /**
  * Returns an Angular Http Request Observable that mirrors the source Observable with the
  * exception of an HttpErrorResponse using a backoff strategy.
- * @param config The {@link RetryBackoffConfig} configuration object.
+ * @param config The RetryBackoffConfig configuration object.
  * @returns A function that returns an Angular Http Request Observable that will resubscribe to the
  * source stream when the source streams an HttpErrorResponse using a backoff strategy.
  * @publicApi
@@ -32,7 +32,7 @@ export function retryHttpRequest<T, E extends HttpErrorResponse>(
 }
 
 /**
- * The default safe retry attemps.
+ * Default safe retry attemps.
  * @publicApi
  */
 export const DEFAULT_RETRY_COUNT = 3;
@@ -46,7 +46,7 @@ function shouldRetry<E extends HttpErrorResponse>(data: RetryBackoffData<E>) {
 }
 
 /**
- * The default safe HTTP error codes that should retry.
+ * Default safe HTTP error codes that should retry.
  * @publicApi
  */
 export const DEFAULT_RETRY_HTTP_CODES = [408, 429, 500, 502, 503, 504];

@@ -6,7 +6,7 @@ import { retryHttpRequest } from './retry-http-request.operator';
 
 /**
  * Intercepts and handles an HttpResponse and retries it if returns a retryable HttpErrorResponse.
- * @param config The {@link RetryBackoffConfig} configuration object.
+ * @param config The RetryBackoffConfig configuration object.
  * @returns An interceptor for HTTP requests made via HttpClient.
  * @publicApi
  */

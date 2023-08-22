@@ -7,10 +7,10 @@
   },
   "private": true,
   "engines": {
-    "node": "^16.20.2 || ^18.17.1 || >=20.0.0",
+    "node": "^16.14.0 || ^18.10.0 || ^20.0.0",
     "yarn": "Please use PNPM instead of YARN to install dependencies",
     "npm": "Please use PNPM instead of NPM to install dependencies",
-    "pnpm": ">=8.6.12"
+    "pnpm": ">=8.0.0"
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "16.2.0",

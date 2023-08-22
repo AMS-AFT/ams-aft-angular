@@ -1,7 +1,9 @@
 {
   "name": "@ams-aft/core",
   "version": "0.0.1",
-  "peerDependencies": {},
+  "peerDependencies": {
+    "rxjs": "^6.5.3 || ^7.4.0"
+  },
   "main": "./index.js",
   "module": "./index.mjs",
   "typings": "./index.d.ts"

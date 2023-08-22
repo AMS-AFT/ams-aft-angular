@@ -20,7 +20,7 @@ import { retryHttpRequest } from './retry-http-request.operator';
 @Injectable()
 export class RetryInterceptor implements HttpInterceptor {
   /**
-   * The {@link RetryBackoffConfig} configuration object.
+   * RetryBackoffConfig configuration object.
    */
   protected readonly config? = inject(RETRY_INTERCEPTOR_CONFIG, { optional: true });
 
@@ -35,13 +35,13 @@ export class RetryInterceptor implements HttpInterceptor {
 }
 
 /**
- * The RetryInterceptor Provider.
+ * Retry interceptor provider.
  * @publicApi
  */
 export const RETRY_INTERCEPTOR_PROVIDER = { provide: HTTP_INTERCEPTORS, useClass: RetryInterceptor, multi: true };
 
 /**
- * The {@link RetryInterceptor} {@link RetryBackoffConfig} configuration object injection token.
+ * RetryBackoffConfig configuration object injection token.
  * @publicApi
  */
 export const RETRY_INTERCEPTOR_CONFIG = new InjectionToken<RetryBackoffConfig<HttpErrorResponse>>(
@@ -49,7 +49,7 @@ export const RETRY_INTERCEPTOR_CONFIG = new InjectionToken<RetryBackoffConfig<Ht
 );
 
 /**
- * The default safe HTTP methods that should retry.
+ * Default safe HTTP methods that should retry.
  * @publicApi
  */
 export const DEFAULT_RETRY_METODS = ['GET'];

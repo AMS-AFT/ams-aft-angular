@@ -12,7 +12,7 @@ const error404 = { status: 404, statusText: '' };
 const error429 = { status: 429, statusText: '', headers: { 'Retry-After': '1' } };
 const error500 = { status: 500, statusText: '' };
 const error502 = { status: 502, statusText: '', headers: { 'Retry-After': '60' } };
-const error503 = { status: 503, statusText: '', headers: { 'Retry-After': '2023-01-01T12:01:00Z' } };
+const error503 = { status: 503, statusText: '', headers: { 'Retry-After': 'Sun, 1 Jan 2023 12:01:00 GMT' } };
 const error504 = { status: 504, statusText: '', headers: { 'Keep-Alive': 'timeout=1, max=1' } };
 
 describe('retryHttpRequest', () => {
@@ -21,7 +21,7 @@ describe('retryHttpRequest', () => {
 
   beforeAll(() => {
     global.Math.random = jest.fn(() => 0);
-    global.Date.now = jest.fn(() => new Date('2023-01-01T12:00:00Z').getTime());
+    global.Date.now = jest.fn(() => new Date('Sun, 1 Jan 2023 12:00:00 GMT').getTime());
   });
 
   afterAll(() => {

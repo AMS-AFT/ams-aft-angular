@@ -4,7 +4,7 @@ const realNow = Date.now;
 
 describe('parseRetryAfter', () => {
   beforeAll(() => {
-    global.Date.now = jest.fn(() => new Date('2023-01-01T12:00:00Z').getTime());
+    global.Date.now = jest.fn(() => new Date('Sun, 1 Jan 2023 12:00:00 GMT').getTime());
   });
 
   afterAll(() => {
@@ -12,11 +12,11 @@ describe('parseRetryAfter', () => {
   });
 
   it(`returns value in miliseconds or the number`, () => {
-    expect(parseRetryAfter('1')).toEqual(1000);
+    expect(parseRetryAfter('1')).toEqual(1_000);
   });
 
   it(`returns milliseconds remaining if is a date`, () => {
-    expect(parseRetryAfter('2023-01-01T12:01:00Z')).toEqual(60000);
+    expect(parseRetryAfter('Sun, 1 Jan 2023 12:01:00 GMT')).toEqual(60_000);
   });
 
   it(`returns null if value is null or undefined`, () => {
@@ -31,14 +31,14 @@ describe('parseRetryAfter', () => {
   });
 
   it(`returns null if value is exact date`, () => {
-    expect(parseRetryAfter('2023-01-01T12:00:00Z')).toBeNull();
+    expect(parseRetryAfter('Sun, 1 Jan 2023 12:00:00 GMT')).toBeNull();
   });
 
   it(`returns null if value is past date`, () => {
-    expect(parseRetryAfter('2023-01-01T00:00:00Z')).toBeNull();
+    expect(parseRetryAfter('Sun, 1 Jan 2023 11:00:00 GMT')).toBeNull();
   });
 
   it(`returns null if value is invalid date`, () => {
-    expect(parseRetryAfter('2023-24-01T00:00:00Z')).toBeNull();
+    expect(parseRetryAfter('Sun, 42 Jan 2023 12:00:00 GMT')).toBeNull();
   });
 });
