@@ -22,6 +22,10 @@ export interface RetryBackoffData<E extends Error> {
    * The milliseconds since the start of the retries.
    */
   totalTime: number;
+  /**
+   * The base interval used to calculate the delay.
+   */
+  baseInterval: number;
 }
 
 /**
@@ -30,31 +34,36 @@ export interface RetryBackoffData<E extends Error> {
 export interface RetryBackoffConfig<E extends Error> {
   /**
    * The maximum number of times to retry.
-   * If count is omitted will be set to 5.
+   * Defaults to 5.
    */
   count?: number;
   /**
+   * The initial interval in milliseconds.
+   * Defaults to random integer between 300 and 500 ms.
+   */
+  baseInterval?: number | ((config: RetryBackoffConfig<E>) => number);
+  /**
    * Whether or not should resubscribe to the source stream when the source stream errors.
+   * Defaults to true.
    */
   shouldRetry?: boolean | ((data: RetryBackoffData<E>) => boolean);
   /**
-   * The initial interval in milliseconds.
-   */
-  baseInterval?: number | ((data: RetryBackoffData<E>) => number);
-  /**
    * The calculated number of milliseconds to delay before retrying.
+   * Defaults to `2^(retryCount-1) * baseInterval`.
    */
-  delay?: (data: RetryBackoffData<E> & { baseInterval: number }) => number;
+  delay?: (data: RetryBackoffData<E>) => number;
   /**
    * Whether or not should not resubscribe to the source stream that should retry.
+   * Defaults to false.
    */
-  shouldNotRetry?: boolean | ((data: RetryBackoffData<E> & { delay: number; baseInterval: number }) => boolean);
+  shouldNotRetry?: boolean | ((data: RetryBackoffData<E> & { delay: number }) => boolean);
   /**
    * Perform actions or side-effects that do not affect the retry.
    */
-  tap?: (data: RetryBackoffData<E> & { delay: number; baseInterval: number }) => void;
+  tap?: (data: RetryBackoffData<E> & { delay: number }) => void;
   /**
    * Whether or not to reset the retry counter when the retried subscription emits its first value.
+   * Defaults to false.
    */
   resetOnSuccess?: boolean;
 }
@@ -77,28 +86,30 @@ export function retryBackoff<T, E extends Error>(config?: RetryBackoffConfig<E>)
       ...(config ?? {})
     };
 
+    const base = getValueOrFn(merged.baseInterval, merged);
+
     const delay = (error: E, retryCount: number) => {
       const totalTime = Date.now() - initiatTime;
       const data: RetryBackoffData<E> = {
         error,
         retryCount,
         totalTime,
-        config: merged
+        config: merged,
+        baseInterval: base
       };
 
       if (!getValueOrFn(merged.shouldRetry, data)) {
         throw error;
       }
 
-      const baseInterval = getValueOrFn(merged.baseInterval, data);
-      const intervalDelay = merged.delay({ baseInterval, ...data });
+      const intervalDelay = merged.delay(data);
 
-      if (intervalDelay <= 0 || getValueOrFn(merged.shouldNotRetry, { baseInterval, delay: intervalDelay, ...data })) {
+      if (intervalDelay <= 0 || getValueOrFn(merged.shouldNotRetry, { delay: intervalDelay, ...data })) {
         throw error;
       }
 
       if (merged.tap != null) {
-        merged.tap({ baseInterval, delay: intervalDelay, ...data });
+        merged.tap({ delay: intervalDelay, ...data });
       }
 
       return timer(intervalDelay);
