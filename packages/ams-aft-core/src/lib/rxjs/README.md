@@ -4,15 +4,15 @@
 
 Returns an Observable that mirrors the source Observable with the exception of an error using a backoff strategy.
 
-```js
-function retryBackoff<T, E extends Error>(config?: RetryBackoffConfig<E>): MonoTypeOperatorFunction<T>
+```ts
+function retryBackoff<T, E extends Error>(config?: RetryBackoffConfig<E>): MonoTypeOperatorFunction<T>;
 ```
 
 A function that returns an Observable that will resubscribe to the source stream when the source stream errors using a backoff strategy.
 
 ![retryBackoff marble diagram](./retry-backoff.png)
 
-```js
+```ts
 interface RetryBackoffConfig<E extends Error> {
   count?: number;
   baseInterval?: number | ((config: RetryBackoffConfig<E>) => number);
@@ -36,7 +36,7 @@ interface RetryBackoffData<E extends Error> {
 
 #### Retry only on certain errors
 
-```js
+```ts
 function shouldRetry<E extends Error>(data: RetryBackoffData<E>): boolean {
   return data.error instanceoff URIError;
 };
@@ -46,35 +46,35 @@ source$.pipe(retryBackoff({ shouldRetry })).subscribe();
 
 #### Define a maximum delay
 
-```js
+```ts
 function delay<E extends Error>(data: RetryBackoffData<E>): number {
   const maxDelay = 1_000;
   const backoffDelay = Math.pow(2, data.retryCount - 1) * data.baseInterval;
 
   return Math.min(maxDelay, backoffDelay);
-};
+}
 
 source$.pipe(retryBackoff({ delay })).subscribe();
 ```
 
 #### Do not retry if the next one exeeds a total max time
 
-```js
+```ts
 function shouldNotRetry<E extends Error>(data: RetryBackoffData<E> & { delay: number }): boolean {
-  const maxTime = 2_000
+  const maxTime = 2_000;
 
   return delay + data.totalTime > maxTime;
-};
+}
 
 source$.pipe(retryBackoff({ shouldNotRetry })).subscribe();
 ```
 
 #### Log every retry
 
-```js
+```ts
 function tap<E extends Error>(data: RetryBackoffData<E> & { delay: number }) {
-  console.log(`Retry number ${data.retryCount} from error ${data.error.name}`, data)
-};
+  console.log(`Retry number ${data.retryCount} from error ${data.error.name}`, data);
+}
 
 source$.pipe(retryBackoff({ tap })).subscribe();
 ```
