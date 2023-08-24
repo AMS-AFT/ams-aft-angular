@@ -3,11 +3,12 @@
  * @param value The key value pairs string to convert.
  * @param separators The strings that separates properties and values.
  * @returns The key value pairs string as object or empty object if invalid separators.
+ * @publicApi
  * @example
- * ```js
- * const value = 'a=0, b=0';
- * const separators = {properties:',',values:'='};
- * stringToObject(value, separators); // {a:0,b:0}
+ * ````ts
+ * const separators = { properties: ',', values: '=' };
+ * stringToObject('a=0, b=0', separators); // {a:0,b:0}
+ * stringToObject('a:0, b:0', separators); // {}
  * ```
  */
 export function stringToObject(
