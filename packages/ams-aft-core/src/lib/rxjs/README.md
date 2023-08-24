@@ -12,33 +12,25 @@ A function that returns an Observable that will resubscribe to the source stream
 
 ![retryBackoff marble diagram](./retry-backoff.png)
 
-```ts
-interface RetryBackoffConfig<E extends Error> {
-  count?: number;
-  baseInterval?: number | ((config: RetryBackoffConfig<E>) => number);
-  shouldRetry?: boolean | ((data: RetryBackoffData<E>) => boolean);
-  delay?: (data: RetryBackoffData<E>) => number;
-  shouldNotRetry?: boolean | ((data: RetryBackoffData<E> & { delay: number }) => boolean);
-  tap?: (data: RetryBackoffData<E> & { delay: number }) => void;
-  resetOnSuccess?: boolean;
-}
-
-interface RetryBackoffData<E extends Error> {
-  config: RetryBackoffConfig<E>;
-  error: E;
-  retryCount: number;
-  totalTime: number;
-  baseInterval: number;
-}
-```
-
 ### Use cases
 
-#### Retry only on certain errors
+#### Set the base interval depending on the time of day
 
 ```ts
-function shouldRetry<E extends Error>(data: RetryBackoffData<E>): boolean {
-  return data.error instanceoff URIError;
+function baseInterval(): number {
+  const hour = Date.now().getHours();
+
+  return hour <= 6 || hour >= 20 ? getRandomBetween(500, 600) : getRandomBetween(200, 300);
+}
+
+source$.pipe(retryBackoff({ baseInterval })).subscribe();
+```
+
+#### Retry only on certain error types
+
+```ts
+function shouldRetry<E extends Error>(scope: RetryBackoffScope<E>): boolean {
+  return scope.error instanceoff URIError;
 };
 
 source$.pipe(retryBackoff({ shouldRetry })).subscribe();
@@ -47,9 +39,9 @@ source$.pipe(retryBackoff({ shouldRetry })).subscribe();
 #### Define a maximum delay
 
 ```ts
-function delay<E extends Error>(data: RetryBackoffData<E>): number {
-  const maxDelay = 1_000;
-  const backoffDelay = Math.pow(2, data.retryCount - 1) * data.baseInterval;
+function delay<E extends Error>(scope: RetryBackoffScope<E>): number {
+  const maxDelay = 2_000;
+  const backoffDelay = Math.pow(2, scope.retryCount - 1) * scope.baseInterval;
 
   return Math.min(maxDelay, backoffDelay);
 }
@@ -57,13 +49,13 @@ function delay<E extends Error>(data: RetryBackoffData<E>): number {
 source$.pipe(retryBackoff({ delay })).subscribe();
 ```
 
-#### Do not retry if the next one exeeds a total max time
+#### Define a maximum operation time
 
 ```ts
-function shouldNotRetry<E extends Error>(data: RetryBackoffData<E> & { delay: number }): boolean {
+function shouldNotRetry<E extends Error>(scope: RetryBackoffScope<E> & { delay: number }): boolean {
   const maxTime = 2_000;
 
-  return delay + data.totalTime > maxTime;
+  return scope.delay + scope.totalTime > maxTime;
 }
 
 source$.pipe(retryBackoff({ shouldNotRetry })).subscribe();
@@ -72,8 +64,8 @@ source$.pipe(retryBackoff({ shouldNotRetry })).subscribe();
 #### Log every retry
 
 ```ts
-function tap<E extends Error>(data: RetryBackoffData<E> & { delay: number }) {
-  console.log(`Retry number ${data.retryCount} from error ${data.error.name}`, data);
+function tap<E extends Error>(scope: RetryBackoffScope<E> & { delay: number }) {
+  console.log(`Retry number ${scope.retryCount} from error ${scope.error.name}`, scope);
 }
 
 source$.pipe(retryBackoff({ tap })).subscribe();

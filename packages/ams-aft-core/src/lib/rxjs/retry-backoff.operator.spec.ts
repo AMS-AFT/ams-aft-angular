@@ -1,6 +1,7 @@
 import { TestScheduler } from 'rxjs/testing';
 
-import { retryBackoff } from './retry-backoff.operator';
+import { getRandomBetween } from '../utils';
+import { retryBackoff, RetryBackoffConfig, RetryBackoffScope } from './retry-backoff.operator';
 
 const realRandom = Math.random;
 
@@ -20,59 +21,27 @@ describe('retryBackoff', () => {
   });
 
   it(`resubscribes to the observable on error with default values`, () => {
-    rxTest.run(({ cold, expectObservable, expectSubscriptions }) => {
-      const source = cold('10ms #');
-      const expected = '9360ms #';
-      const subs = ['^ 9ms !', '310ms ^ 9ms !', '920ms ^ 9ms !', '2130ms ^ 9ms !', '4540ms ^ 9ms !', '9350ms ^ 9ms !'];
-      const result = source.pipe(retryBackoff());
-
-      expectObservable(result).toBe(expected);
-      expectSubscriptions(source.subscriptions).toBe(subs);
-    });
+    testBackoffOperator();
   });
 
   it(`uses custom "count"`, () => {
-    rxTest.run(({ cold, expectObservable, expectSubscriptions }) => {
-      const source = cold('10ms #');
-      const expected = '930ms #';
-      const subs = ['^ 9ms !', '310ms ^ 9ms !', '920ms ^ 9ms !'];
-      const result = source.pipe(retryBackoff({ count: 2 }));
-
-      expectObservable(result).toBe(expected);
-      expectSubscriptions(source.subscriptions).toBe(subs);
-    });
+    testBackoffOperator({ count: 2, config: { count: 2 } });
   });
 
   it(`uses custom "shouldRetry"`, () => {
-    rxTest.run(({ cold, expectObservable, expectSubscriptions }) => {
-      const source = cold('10ms #');
-      const expected = '10ms #';
-      const subs = ['^ 9ms !'];
-      const result = source.pipe(retryBackoff({ shouldRetry: false }));
-
-      expectObservable(result).toBe(expected);
-      expectSubscriptions(source.subscriptions).toBe(subs);
-    });
+    testBackoffOperator({ count: 0, config: { shouldRetry: false } });
   });
 
   it(`uses custom "baseInterval"`, () => {
-    rxTest.run(({ cold, expectObservable, expectSubscriptions }) => {
-      const source = cold('10ms #');
-      const expected = '370ms #';
-      const subs = ['^ 9ms !', '20ms ^ 9ms !', '50ms ^ 9ms !', '100ms ^ 9ms !', '190ms ^ 9ms !', '360ms ^ 9ms !'];
-      const result = source.pipe(retryBackoff({ baseInterval: 10 }));
-
-      expectObservable(result).toBe(expected);
-      expectSubscriptions(source.subscriptions).toBe(subs);
-    });
+    testBackoffOperator({ base: 10, config: { baseInterval: 10 } });
   });
 
   it(`uses custom "delay"`, () => {
     rxTest.run(({ cold, expectObservable, expectSubscriptions }) => {
-      const source = cold('10ms #');
-      const expected = '110ms #';
-      const subs = ['^ 9ms !', '20ms ^ 9ms !', '40ms ^ 9ms !', '60ms ^ 9ms !', '80ms ^ 9ms !', '100ms ^ 9ms !'];
-      const result = source.pipe(retryBackoff({ delay: () => 10 }));
+      const source = cold('#');
+      const expected = '50ms #';
+      const subs = ['(^!)', '10ms (^!)', '20ms (^!)', '30ms (^!)', '40ms (^!)', '50ms (^!)'];
+      const result = source.pipe(retryBackoff({ delay: 10 }));
 
       expectObservable(result).toBe(expected);
       expectSubscriptions(source.subscriptions).toBe(subs);
@@ -80,35 +49,117 @@ describe('retryBackoff', () => {
   });
 
   it(`uses custom "shouldNotRetry"`, () => {
-    rxTest.run(({ cold, expectObservable, expectSubscriptions }) => {
-      const source = cold('10ms #');
-      const expected = '10ms #';
-      const subs = ['^ 9ms !'];
-      const result = source.pipe(retryBackoff({ shouldNotRetry: true }));
-
-      expectObservable(result).toBe(expected);
-      expectSubscriptions(source.subscriptions).toBe(subs);
-    });
+    testBackoffOperator({ count: 0, config: { shouldNotRetry: true } });
   });
 
   it(`uses custom "tap"`, () => {
     const fn = jest.fn();
-    const tap = () => {
-      fn();
-    };
 
     expect(fn).not.toHaveBeenCalled();
 
-    rxTest.run(({ cold, expectObservable, expectSubscriptions }) => {
-      const source = cold('10ms #');
-      const expected = '9360ms #';
-      const subs = ['^ 9ms !', '310ms ^ 9ms !', '920ms ^ 9ms !', '2130ms ^ 9ms !', '4540ms ^ 9ms !', '9350ms ^ 9ms !'];
-      const result = source.pipe(retryBackoff({ tap }));
-
-      expectObservable(result).toBe(expected);
-      expectSubscriptions(source.subscriptions).toBe(subs);
-    });
+    testBackoffOperator({ config: { tap: () => fn() } });
 
     expect(fn).toHaveBeenCalledTimes(5);
   });
+
+  describe('use cases', () => {
+    it(`set the base interval depending on the time of day`, () => {
+      const getBaseInterval = (date: Date) => {
+        const hour = date.getHours();
+        return hour <= 6 || hour >= 20 ? getRandomBetween(500, 600) : getRandomBetween(200, 300);
+      };
+
+      let date = new Date('Sun, 1 Jan 2023 12:00:00 GMT');
+      testBackoffOperator({
+        base: 200,
+        config: { baseInterval: getBaseInterval(date) }
+      });
+
+      date = new Date('Sun, 1 Jan 2023 23:00:00 GMT');
+      testBackoffOperator({
+        base: 500,
+        config: { baseInterval: getBaseInterval(date) }
+      });
+    });
+
+    it(`retry only on certain error types`, () => {
+      const getShouldRetry = (scope: RetryBackoffScope<Error>) => {
+        return scope.error instanceof URIError;
+      };
+
+      testBackoffOperator({ count: 0, config: { shouldRetry: getShouldRetry } });
+      testBackoffOperator({ error: new URIError(), config: { shouldRetry: getShouldRetry } });
+    });
+
+    it(`define a maximum delay`, () => {
+      const getDelay = (scope: RetryBackoffScope<Error>) => {
+        const maxDelay = 2_000;
+        const backoffDelay = Math.pow(2, scope.retryCount - 1) * scope.baseInterval;
+        return Math.min(maxDelay, backoffDelay);
+      };
+
+      rxTest.run(({ cold, expectObservable, expectSubscriptions }) => {
+        const source = cold('#');
+        const expected = '6100ms #';
+        const subs = ['(^!)', '300ms (^!)', '900ms (^!)', '2100ms (^!)', '4100ms (^!)', '6100ms (^!)'];
+        const result = source.pipe(retryBackoff({ delay: getDelay }));
+
+        expectObservable(result).toBe(expected);
+        expectSubscriptions(source.subscriptions).toBe(subs);
+      });
+    });
+
+    it(`define a maximum operation time`, () => {
+      const getShouldNotRetry = (scope: RetryBackoffScope<Error> & { delay: number }) => {
+        const maxTime = 2_000;
+        return scope.delay + scope.totalTime > maxTime;
+      };
+
+      testBackoffOperator({ count: 3, config: { shouldNotRetry: getShouldNotRetry } });
+    });
+
+    it(`log every retry`, () => {
+      const fn = jest.fn();
+      const getTap = (scope: RetryBackoffScope<Error> & { delay: number }) => {
+        fn(`Retry number ${scope.retryCount}`);
+      };
+
+      expect(fn).not.toHaveBeenCalled();
+
+      testBackoffOperator({ config: { tap: getTap } });
+
+      expect(fn).toHaveBeenCalledTimes(5);
+      expect(fn).toHaveBeenNthCalledWith(1, 'Retry number 1');
+      expect(fn).toHaveBeenNthCalledWith(2, 'Retry number 2');
+      expect(fn).toHaveBeenNthCalledWith(3, 'Retry number 3');
+      expect(fn).toHaveBeenNthCalledWith(4, 'Retry number 4');
+      expect(fn).toHaveBeenNthCalledWith(5, 'Retry number 5');
+    });
+  });
 });
+
+function testBackoffOperator(conf?: {
+  count?: number;
+  base?: number;
+  config?: RetryBackoffConfig<Error>;
+  error?: Error;
+}) {
+  const testScheduler = new TestScheduler((actual, expected) => expect(actual).toEqual(expected));
+  const subs = ['(^!)'];
+  let numExpected = 0;
+
+  for (let i = 1; i <= (conf?.count ?? 5); i++) {
+    const delay = Math.pow(2, i - 1) * (conf?.base ?? 300);
+    numExpected = numExpected + delay;
+    subs.push(`${numExpected}ms (^!)`);
+  }
+
+  return testScheduler.run(({ cold, expectObservable, expectSubscriptions }) => {
+    const source = cold('#', {}, conf?.error ?? new Error());
+    const expected = `${numExpected}ms #`;
+    const result = source.pipe(retryBackoff(conf?.config ?? {}));
+
+    expectObservable(result).toBe(expected, {}, conf?.error ?? new Error());
+    expectSubscriptions(source.subscriptions).toBe(subs);
+  });
+}
