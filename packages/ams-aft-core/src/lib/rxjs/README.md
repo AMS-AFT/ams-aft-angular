@@ -12,6 +12,29 @@ A function that returns an Observable that will resubscribe to the source stream
 
 ![retryBackoff marble diagram](./retry-backoff.png)
 
+```ts
+interface RetryBackoffConfig<E extends Error> {
+  count?: number | (() => number);
+  baseInterval?: number | (() => number);
+  shouldRetry?: boolean | ((scope: RetryBackoffScope<E>) => boolean);
+  delay?: number | ((scope: RetryBackoffScope<E>) => number);
+  shouldNotRetry?: boolean | ((scope: RetryBackoffScope<E> & { delay: number }) => boolean);
+  tap?: (scope: RetryBackoffScope<E> & { delay: number }) => void;
+  resetOnSuccess?: boolean | (() => boolean);
+}
+```
+
+```ts
+interface RetryBackoffScope<E extends Error> {
+  count: number;
+  baseInterval: number;
+  resetOnSuccess: boolean;
+  error: E;
+  retryCount: number;
+  totalTime: number;
+}
+```
+
 ### Use cases
 
 #### Set the base interval depending on the time of day
