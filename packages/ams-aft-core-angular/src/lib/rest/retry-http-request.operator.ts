@@ -1,13 +1,15 @@
 import {
-  getExponentialBackoffDelay,
+  getBackoffDelay,
   parseKeepAliveTimeout,
   parseRetryAfter,
   retryBackoff,
   RetryBackoffConfig,
-  RetryBackoffData
+  RetryBackoffScope
 } from '@ams-aft/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { MonoTypeOperatorFunction } from 'rxjs';
+
+import { isClientNetworkError } from './is-client-network-error.function';
 
 /**
  * Returns an Angular Http Request Observable that mirrors the source Observable with the
@@ -22,9 +24,9 @@ export function retryHttpRequest<T, E extends HttpErrorResponse>(
 ): MonoTypeOperatorFunction<T> {
   const merged: RetryBackoffConfig<E> = {
     count: DEFAULT_RETRY_COUNT,
-    shouldRetry,
-    delay,
-    shouldNotRetry,
+    shouldRetry: getShouldRetry,
+    delay: getDelay,
+    shouldNotRetry: getShouldNotRetry,
     ...(config ?? {})
   };
 
@@ -38,40 +40,39 @@ export function retryHttpRequest<T, E extends HttpErrorResponse>(
 export const DEFAULT_RETRY_COUNT = 3;
 
 /**
- * Returns true if the HttpErrorResponse status is in the list of safe HTTP error codes.
- * @internal
- */
-function shouldRetry<E extends HttpErrorResponse>(data: RetryBackoffData<E>) {
-  return DEFAULT_RETRY_HTTP_CODES.includes(data.error.status);
-}
-
-/**
  * Default safe HTTP error codes that should retry.
  * @publicApi
  */
 export const DEFAULT_RETRY_HTTP_CODES = [408, 429, 500, 502, 503, 504];
 
 /**
- * Returns value of the Retry-After's HTTP header, if it exists. Otherwise the calculated exponential backoff interval.
+ * Returns true if the HttpErrorResponse status is in the list of safe HTTP error codes
+ * or a client connection error occurs.
  * @internal
  */
-function delay<E extends HttpErrorResponse>(data: RetryBackoffData<E> & { baseInterval: number }): number {
-  const retryAfter = parseRetryAfter(data.error.headers.get('Retry-After'));
-
-  return retryAfter ?? getExponentialBackoffDelay(data);
+function getShouldRetry<E extends HttpErrorResponse>(scope: RetryBackoffScope<E>) {
+  return DEFAULT_RETRY_HTTP_CODES.includes(scope.error.status) || isClientNetworkError(scope.error);
 }
 
 /**
- * Checks if the total operation time exceeds the hardoded safe maximum of 100 seconds
+ * Returns value of the Retry-After's HTTP header, if it exists. Otherwise the calculated backoff interval.
+ * @internal
+ */
+function getDelay<E extends HttpErrorResponse>(scope: RetryBackoffScope<E>): number {
+  const retryAfter = parseRetryAfter(scope.error.headers.get('Retry-After'));
+
+  return retryAfter ?? getBackoffDelay(scope);
+}
+
+/**
+ * Checks if the total operation time exceeds the safe maximum of 100 seconds
  * or the value of the Keep-Alive's HTTP header timeout value, whichever is lower.
  * @internal
  */
-function shouldNotRetry<E extends HttpErrorResponse>(
-  data: RetryBackoffData<E> & { delay: number; baseInterval: number }
-) {
+function getShouldNotRetry<E extends HttpErrorResponse>(scope: RetryBackoffScope<E> & { delay: number }) {
   const maxTime = 100_000;
-  const keepAlive = parseKeepAliveTimeout(data.error.headers.get('Keep-Alive'));
+  const keepAlive = parseKeepAliveTimeout(scope.error.headers.get('Keep-Alive'));
   const maxTotal = keepAlive != null ? Math.min(keepAlive, maxTime) : maxTime;
 
-  return data.totalTime + data.delay > maxTotal;
+  return scope.totalTime + scope.delay > maxTotal;
 }

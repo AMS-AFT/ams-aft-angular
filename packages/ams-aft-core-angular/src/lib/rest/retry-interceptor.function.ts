@@ -1,7 +1,7 @@
 import { RetryBackoffConfig } from '@ams-aft/core';
 import { HttpErrorResponse, HttpHandlerFn, HttpInterceptorFn, HttpRequest } from '@angular/common/http';
 
-import { shouldRetry } from './interceptor-should-retry.function';
+import { interceptorShouldRetry } from './interceptor-should-retry.function';
 import { retryHttpRequest } from './retry-http-request.operator';
 
 /**
@@ -13,7 +13,7 @@ import { retryHttpRequest } from './retry-http-request.operator';
 export function retryInterceptor<E extends HttpErrorResponse>(config?: RetryBackoffConfig<E>): HttpInterceptorFn {
   return <T>(request: HttpRequest<T>, next: HttpHandlerFn) => {
     const merged: RetryBackoffConfig<E> = {
-      shouldRetry: shouldRetry(request),
+      shouldRetry: interceptorShouldRetry(request),
       ...(config ?? {})
     };
 

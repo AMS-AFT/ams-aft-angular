@@ -10,7 +10,7 @@ import {
 import { inject, Injectable, InjectionToken } from '@angular/core';
 import { Observable } from 'rxjs';
 
-import { shouldRetry } from './interceptor-should-retry.function';
+import { interceptorShouldRetry } from './interceptor-should-retry.function';
 import { retryHttpRequest } from './retry-http-request.operator';
 
 /**
@@ -20,13 +20,13 @@ import { retryHttpRequest } from './retry-http-request.operator';
 @Injectable()
 export class RetryInterceptor implements HttpInterceptor {
   /**
-   * RetryBackoffConfig configuration object.
+   * The RetryBackoffConfig configuration object.
    */
   protected readonly config? = inject(RETRY_INTERCEPTOR_CONFIG, { optional: true });
 
-  intercept<T>(request: HttpRequest<T>, next: HttpHandler): Observable<HttpEvent<T>> {
-    const merged: RetryBackoffConfig<HttpErrorResponse> = {
-      shouldRetry: shouldRetry(request),
+  intercept<T, E extends HttpErrorResponse>(request: HttpRequest<T>, next: HttpHandler): Observable<HttpEvent<T>> {
+    const merged: RetryBackoffConfig<E> = {
+      shouldRetry: interceptorShouldRetry(request),
       ...(this.config ?? {})
     };
 
@@ -35,10 +35,10 @@ export class RetryInterceptor implements HttpInterceptor {
 }
 
 /**
- * Retry interceptor provider.
+ * Default safe HTTP methods that should retry.
  * @publicApi
  */
-export const RETRY_INTERCEPTOR_PROVIDER = { provide: HTTP_INTERCEPTORS, useClass: RetryInterceptor, multi: true };
+export const DEFAULT_RETRY_METODS = ['GET'];
 
 /**
  * RetryBackoffConfig configuration object injection token.
@@ -49,7 +49,7 @@ export const RETRY_INTERCEPTOR_CONFIG = new InjectionToken<RetryBackoffConfig<Ht
 );
 
 /**
- * Default safe HTTP methods that should retry.
+ * Retry interceptor provider.
  * @publicApi
  */
-export const DEFAULT_RETRY_METODS = ['GET'];
+export const RETRY_INTERCEPTOR_PROVIDER = { provide: HTTP_INTERCEPTORS, useClass: RetryInterceptor, multi: true };
