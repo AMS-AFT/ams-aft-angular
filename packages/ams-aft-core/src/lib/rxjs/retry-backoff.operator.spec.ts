@@ -63,7 +63,12 @@ describe('retryBackoff', () => {
   });
 
   describe('use cases', () => {
-    it(`set the base interval depending on the time of day`, () => {
+    it(`configure the number of retries and base interval depending on the time of the day`, () => {
+      const getCount = (date: Date) => {
+        const hour = date.getHours();
+        return hour <= 6 || hour >= 20 ? 7 : 2;
+      };
+
       const getBaseInterval = (date: Date) => {
         const hour = date.getHours();
         return hour <= 6 || hour >= 20 ? getRandomBetween(500, 600) : getRandomBetween(200, 300);
@@ -71,14 +76,16 @@ describe('retryBackoff', () => {
 
       let date = new Date('Sun, 1 Jan 2023 12:00:00 GMT');
       testBackoffOperator({
+        count: 2,
         base: 200,
-        config: { baseInterval: getBaseInterval(date) }
+        config: { count: getCount(date), baseInterval: getBaseInterval(date) }
       });
 
       date = new Date('Sun, 1 Jan 2023 23:00:00 GMT');
       testBackoffOperator({
+        count: 7,
         base: 500,
-        config: { baseInterval: getBaseInterval(date) }
+        config: { count: getCount(date), baseInterval: getBaseInterval(date) }
       });
     });
 
@@ -156,10 +163,9 @@ function testBackoffOperator(conf?: {
 
   return testScheduler.run(({ cold, expectObservable, expectSubscriptions }) => {
     const source = cold('#', {}, conf?.error ?? new Error());
-    const expected = `${numExpected}ms #`;
     const result = source.pipe(retryBackoff(conf?.config ?? {}));
 
-    expectObservable(result).toBe(expected, {}, conf?.error ?? new Error());
+    expectObservable(result).toBe(`${numExpected}ms #`, {}, conf?.error ?? new Error());
     expectSubscriptions(source.subscriptions).toBe(subs);
   });
 }

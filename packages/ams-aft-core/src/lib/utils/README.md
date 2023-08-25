@@ -44,7 +44,7 @@ Returns the key value pairs string as object or empty object if invalid separato
 
 ```ts
 const separators = { properties: ',', values: '=' };
-stringToObject('a=0, b=0', separators); // {a:0,b:0}
+stringToObject('a=0, b=0', separators); // { a: '0', b: '0' }
 stringToObject('a:0, b:0', separators); // {}
 ```
 

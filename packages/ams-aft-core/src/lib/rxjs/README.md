@@ -37,16 +37,22 @@ interface RetryBackoffScope<E extends Error> {
 
 ### Use cases
 
-#### Set the base interval depending on the time of day
+#### Configure the number of retries and base interval depending on the time of the day
 
 ```ts
+function count(): number {
+  const hour = Date.now().getHours();
+
+  return hour <= 6 || hour >= 20 ? 7 : 2;
+}
+
 function baseInterval(): number {
   const hour = Date.now().getHours();
 
   return hour <= 6 || hour >= 20 ? getRandomBetween(500, 600) : getRandomBetween(200, 300);
 }
 
-source$.pipe(retryBackoff({ baseInterval })).subscribe();
+source$.pipe(retryBackoff({ count, baseInterval })).subscribe();
 ```
 
 #### Retry only on certain error types

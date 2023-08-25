@@ -7,7 +7,7 @@ Code related with HTTP REST calls.
 Returns the [Keep-Alive](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Keep-Alive) HTTP header timeout value in milliseconds.
 
 ```js
-function parseKeepAliveTimeout(value?: string | null): number | null
+function parseKeepAliveTimeout(value?: string | null): number | null;
 ```
 
 Returns the timeout value in milliseconds. Otherwise will return null.
@@ -24,7 +24,7 @@ parseKeepAliveTimeout(''); // null
 Returns the [Retry-After](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Retry-After) response HTTP header value in milliseconds.
 
 ```js
-function parseRetryAfter(value?: string | null): number | null
+function parseRetryAfter(value?: string | null): number | null;
 ```
 
 Returns the value in milliseconds or the milliseconds remaining if is a future date. Otherwise will return null.
