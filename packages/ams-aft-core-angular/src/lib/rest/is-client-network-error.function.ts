@@ -7,5 +7,5 @@ import { HttpErrorResponse } from '@angular/common/http';
  * @publicApi
  */
 export function isClientNetworkError<E extends HttpErrorResponse>(error: E): boolean {
-  return error.status === 0 && error instanceof ProgressEvent;
+  return error.status === 0 && error.error instanceof ProgressEvent;
 }
