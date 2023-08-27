@@ -12,11 +12,17 @@ import { MonoTypeOperatorFunction } from 'rxjs';
 import { isClientNetworkError } from './is-client-network-error.function';
 
 /**
- * Returns an Angular Http Request Observable that mirrors the source Observable with the
- * exception of an HttpErrorResponse using a backoff strategy.
+ * Retries an HttpClient request when returns an HttpErrorResponse.
+ *
+ * By default it will retry the failed HTTP request 3 times with a delay that increases exponentially between attempts,
+ * as long as it's a network error or the status is one of the following: 408, 429, 500, 502, 503, 504.
+ * It will use the value of the Retry-After HTTP header if exists instead of the backoff delay,
+ * and the Keep-Alive Timeout HTTP header or 100s, whichever is less, as the operation limit.
  * @param config The RetryBackoffConfig configuration object.
  * @returns A function that returns an Angular Http Request Observable that will resubscribe to the
  * source stream when the source streams an HttpErrorResponse using a backoff strategy.
+ * @see {@link RetryBackoffConfig}
+ * @see {@link retryBackoff}
  * @publicApi
  */
 export function retryHttpRequest<T, E extends HttpErrorResponse>(

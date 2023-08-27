@@ -8,6 +8,7 @@ const realRandom = Math.random;
 const realNow = Date.now;
 
 const url = 'api/resource';
+const errorNetwork = { status: 0, statusText: '', error: new ProgressEvent('') };
 const error404 = { status: 404, statusText: '' };
 const error429 = { status: 429, statusText: '', headers: { 'Retry-After': '1' } };
 const error500 = { status: 500, statusText: '' };
@@ -66,6 +67,21 @@ describe('retryHttpRequest', () => {
     tick(1200);
     req = httpTestingController.expectOne(url);
     req.flush('', error500);
+  }));
+
+  it(`retry on network error`, fakeAsync(() => {
+    httpClient
+      .get(url)
+      .pipe(retryHttpRequest())
+      .subscribe({
+        next: () => fail('should have failed with the network error'),
+        error: (error: HttpErrorResponse) => {
+          expect(error.status).toEqual(errorNetwork.status);
+        }
+      });
+
+    const req = httpTestingController.expectOne(url);
+    req.flush('', errorNetwork);
   }));
 
   it(`doesn't retry on non retryable HTTP error`, fakeAsync(() => {
