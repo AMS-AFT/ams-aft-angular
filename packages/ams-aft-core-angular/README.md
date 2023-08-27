@@ -1,7 +1,5 @@
-# ams-aft-core-angular
+# AMS-AFT Core Angular
 
-This library was generated with [Nx](https://nx.dev).
+Library of code for the Angular framework.
 
-## Running unit tests
-
-Run `nx test ams-aft-core-angular` to execute the unit tests.
+- [Rest](./src/lib/rest/README.md): code related with HTTP REST requests.

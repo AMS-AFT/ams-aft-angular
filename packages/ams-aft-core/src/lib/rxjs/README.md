@@ -1,6 +1,6 @@
 # AMS-AFT Core: RxJS
 
-## retryBackoff
+## retryBackoff RxJS operator
 
 Returns an Observable that mirrors the source Observable with the exception of an error using a backoff strategy.
 
@@ -11,6 +11,8 @@ function retryBackoff<T, E extends Error>(config?: RetryBackoffConfig<E>): MonoT
 A function that returns an Observable that will resubscribe to the source stream when the source stream errors using a backoff strategy.
 
 ![retryBackoff marble diagram](./retry-backoff.png)
+
+### Exposed types
 
 ```ts
 interface RetryBackoffConfig<E extends Error> {
