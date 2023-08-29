@@ -24,16 +24,12 @@
     },
     "test": {
       "executor": "@nx/jest:jest",
-      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "outputs": ["{workspaceRoot}/docs/ams-aft-core-angular/coverage/lcov-report"],
       "options": {
         "jestConfig": "packages/ams-aft-core-angular/jest.config.ts",
-        "passWithNoTests": true
-      },
-      "configurations": {
-        "ci": {
-          "ci": true,
-          "codeCoverage": true
-        }
+        "passWithNoTests": true,
+        "ci": true,
+        "codeCoverage": true
       }
     },
     "lint": {
@@ -46,6 +42,16 @@
           "packages/ams-aft-core-angular/**/*.html",
           "packages/ams-aft-core-angular/package.json"
         ]
+      }
+    },
+    "docs": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "pnpm typedoc --options packages/ams-aft-core-angular/typedoc.json",
+          "nx test ams-aft-core-angular --code-coverage"
+        ],
+        "parallel": false
       }
     }
   }

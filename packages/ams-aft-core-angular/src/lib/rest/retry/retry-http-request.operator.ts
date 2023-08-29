@@ -4,7 +4,8 @@ import {
   parseRetryAfter,
   retryBackoff,
   RetryBackoffConfig,
-  RetryBackoffScope
+  RetryBackoffScope,
+  SECOND_AS_MILLISECOND
 } from '@ams-aft/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { MonoTypeOperatorFunction } from 'rxjs';
@@ -14,10 +15,10 @@ import { isClientNetworkError } from './is-client-network-error.function';
 /**
  * Retries an HttpClient request when returns an HttpErrorResponse.
  *
- * By default it will retry the failed HTTP request 3 times with a delay that increases exponentially between attempts,
- * as long as it's a network error or the status is one of the following: 408, 429, 500, 502, 503, 504.
- * It will use the value of the Retry-After HTTP header if exists instead of the backoff delay,
- * and the Keep-Alive Timeout HTTP header or 100s, whichever is less, as the operation limit.
+ * By default it will retry the failed HTTP request up to 3 times with a delay that increases exponentially
+ * between attempts, as long as it's a network error or the status is one of the following:
+ * 408, 429, 500, 502, 503, 504. It will use the value of the Retry-After HTTP header if exists instead of the
+ * backoff delay, and the Keep-Alive Timeout HTTP header or 100s, whichever is less, as the operation limit.
  * @param config The RetryBackoffConfig configuration object.
  * @returns A function that returns an Angular Http Request Observable that will resubscribe to the
  * source stream when the source streams an HttpErrorResponse using a backoff strategy.
@@ -76,7 +77,7 @@ function getDelay<E extends HttpErrorResponse>(scope: RetryBackoffScope<E>): num
  * @internal
  */
 function getShouldNotRetry<E extends HttpErrorResponse>(scope: RetryBackoffScope<E> & { delay: number }) {
-  const maxTime = 100_000;
+  const maxTime = 100 * SECOND_AS_MILLISECOND;
   const keepAlive = parseKeepAliveTimeout(scope.error.headers.get('Keep-Alive'));
   const maxTotal = keepAlive != null ? Math.min(keepAlive, maxTime) : maxTime;
 

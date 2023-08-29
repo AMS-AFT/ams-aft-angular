@@ -1,0 +1,16 @@
+{
+  "out": "../../docs/ams-aft-core-angular",
+  "entryPoints": ["./src/index.ts"],
+  "includes": "./src/lib",
+  "tsconfig": "./tsconfig.lib.json",
+  "exclude": "**/*+(index|.spec|.e2e).ts",
+  "excludeInternal": true,
+  "excludePrivate": true,
+  "excludeExternals": true,
+  "resolveUtilityTypes": true,
+  "plugin": ["typedoc-plugin-missing-exports", "typedoc-plugin-mdn-links"],
+  "navigationLinks": {
+    "Tests Report": "./coverage/index.html",
+    "Coverage": "./coverage/lcov-report/index.html"
+  }
+}
