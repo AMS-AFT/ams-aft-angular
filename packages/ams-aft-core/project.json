@@ -11,10 +11,6 @@
         "outputPath": "dist/packages/ams-aft-core"
       }
     },
-    "publish": {
-      "command": "node tools/scripts/publish.mjs ams-aft-core {args.ver} {args.tag}",
-      "dependsOn": ["build"]
-    },
     "lint": {
       "executor": "@nx/linter:eslint",
       "outputs": ["{options.outputFile}"],
@@ -25,16 +21,22 @@
     },
     "test": {
       "executor": "@nx/jest:jest",
-      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "outputs": ["{workspaceRoot}/docs/ams-aft-core/coverage/lcov-report"],
       "options": {
         "jestConfig": "packages/ams-aft-core/jest.config.ts",
-        "passWithNoTests": true
-      },
-      "configurations": {
-        "ci": {
-          "ci": true,
-          "codeCoverage": true
-        }
+        "passWithNoTests": true,
+        "ci": true,
+        "codeCoverage": true
+      }
+    },
+    "docs": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "pnpm typedoc --options packages/ams-aft-core/typedoc.json",
+          "nx test ams-aft-core --code-coverage"
+        ],
+        "parallel": false
       }
     }
   },

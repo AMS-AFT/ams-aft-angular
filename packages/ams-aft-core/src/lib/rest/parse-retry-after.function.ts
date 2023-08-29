@@ -1,18 +1,22 @@
+import { SECOND_AS_MILLISECOND } from '../utils';
+
 /**
  * Returns the Retry-After response HTTP header value in milliseconds.
  * @param value The Retry-After HTTP response header value.
- * @returns The value in milliseconds or the milliseconds remaining if is a future date. Otherwise will return null.
+ * @returns The value in milliseconds or the milliseconds remaining if is a future date.
+ * Null if it's not a valid number or date or is a past date.
+ * @see {@link https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Retry-After Retry-After}
  * @publicApi
  * @example
  * ```js
  * // current date 'Sun, 1 Jan 2023 12:00:00 GMT'
  * parseRetryAfter('1'); // 1_000
  * parseRetryAfter('Sun, 1 Jan 2023 12:01:00 GMT'); // 60_000
+ * parseRetryAfter('Sun, 1 Jan 2023 12:00:00 GMT'); // 0
  * parseRetryAfter(); // null
  * parseRetryAfter(null); // null
  * parseRetryAfter(''); // null
  * parseRetryAfter('a'); // null
- * parseRetryAfter('Sun, 1 Jan 2023 12:00:00 GMT'); // null
  * parseRetryAfter('Sun, 1 Jan 2023 11:00:00 GMT'); // null
  * parseRetryAfter('Sun, 42 Jan 2023 12:00:00 GMT'); // null
  * ```
@@ -33,7 +37,7 @@ export function parseRetryAfter(value?: string | null): number | null {
 function parseNumber(value: string): number | null {
   const num = Number(value);
 
-  return isNaN(num) ? null : num * 1000;
+  return isNaN(num) ? null : num * SECOND_AS_MILLISECOND;
 }
 
 /**
@@ -50,5 +54,5 @@ function parseDate(value: string): number | null {
 
   const diff = time - Date.now();
 
-  return diff > 0 ? diff : null;
+  return diff < 0 ? null : diff;
 }

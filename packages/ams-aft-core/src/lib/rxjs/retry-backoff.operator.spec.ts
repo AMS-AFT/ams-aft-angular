@@ -1,6 +1,6 @@
 import { TestScheduler } from 'rxjs/testing';
 
-import { getRandomBetween } from '../utils';
+import { randomBetween } from '../utils';
 import { retryBackoff, RetryBackoffConfig, RetryBackoffScope } from './retry-backoff.operator';
 
 const realRandom = Math.random;
@@ -71,7 +71,7 @@ describe('retryBackoff', () => {
 
       const getBaseInterval = (date: Date) => {
         const hour = date.getHours();
-        return hour <= 6 || hour >= 20 ? getRandomBetween(500, 600) : getRandomBetween(200, 300);
+        return hour <= 6 || hour >= 20 ? randomBetween(500, 600) : randomBetween(200, 300);
       };
 
       let date = new Date('Sun, 1 Jan 2023 12:00:00 GMT');
@@ -163,7 +163,7 @@ function testBackoffOperator(conf?: {
 
   return testScheduler.run(({ cold, expectObservable, expectSubscriptions }) => {
     const source = cold('#', {}, conf?.error ?? new Error());
-    const result = source.pipe(retryBackoff(conf?.config ?? {}));
+    const result = source.pipe(retryBackoff(conf?.config));
 
     expectObservable(result).toBe(`${numExpected}ms #`, {}, conf?.error ?? new Error());
     expectSubscriptions(source.subscriptions).toBe(subs);

@@ -1,3 +1,4 @@
+import { SECOND_AS_MILLISECOND } from '../utils';
 import { parseRetryAfter } from './parse-retry-after.function';
 
 const realNow = Date.now;
@@ -11,12 +12,16 @@ describe('parseRetryAfter', () => {
     global.Date.now = realNow;
   });
 
-  it(`returns value in miliseconds or the number`, () => {
-    expect(parseRetryAfter('1')).toEqual(1_000);
+  it(`returns value in miliseconds if number`, () => {
+    expect(parseRetryAfter('1')).toEqual(1 * SECOND_AS_MILLISECOND);
   });
 
-  it(`returns milliseconds remaining if is a date`, () => {
-    expect(parseRetryAfter('Sun, 1 Jan 2023 12:01:00 GMT')).toEqual(60_000);
+  it(`returns milliseconds remaining if future date`, () => {
+    expect(parseRetryAfter('Sun, 1 Jan 2023 12:01:00 GMT')).toEqual(60 * SECOND_AS_MILLISECOND);
+  });
+
+  it(`returns 0 if value is exact date`, () => {
+    expect(parseRetryAfter('Sun, 1 Jan 2023 12:00:00 GMT')).toEqual(0);
   });
 
   it(`returns null if value is null or undefined`, () => {
@@ -26,12 +31,8 @@ describe('parseRetryAfter', () => {
 
   it(`returns null if value is invalid number`, () => {
     expect(parseRetryAfter('')).toBeNull();
-    expect(parseRetryAfter('  ')).toBeNull();
+    expect(parseRetryAfter(' ')).toBeNull();
     expect(parseRetryAfter('a')).toBeNull();
-  });
-
-  it(`returns null if value is exact date`, () => {
-    expect(parseRetryAfter('Sun, 1 Jan 2023 12:00:00 GMT')).toBeNull();
   });
 
   it(`returns null if value is past date`, () => {

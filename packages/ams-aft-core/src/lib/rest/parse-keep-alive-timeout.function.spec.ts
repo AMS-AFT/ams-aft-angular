@@ -1,8 +1,9 @@
+import { SECOND_AS_MILLISECOND } from '../utils';
 import { parseKeepAliveTimeout } from './parse-keep-alive-timeout.function';
 
 describe('parseKeepAliveTimeout', () => {
   it(`returns timeout value in milliseconds`, () => {
-    expect(parseKeepAliveTimeout('timeout=1, max=1')).toEqual(1_000);
+    expect(parseKeepAliveTimeout('timeout=1, max=1')).toEqual(1 * SECOND_AS_MILLISECOND);
   });
 
   it(`returns null if value is null or undefined`, () => {
