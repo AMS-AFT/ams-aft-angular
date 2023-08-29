@@ -1,5 +1,6 @@
 const nxPreset = require('@nx/jest/preset').default;
 
 module.exports = {
-  ...nxPreset
+  ...nxPreset,
+  setupFilesAfterEnv: [...(nxPreset.setupFilesAfterEnv ?? []), 'jest-extended/all']
 };
