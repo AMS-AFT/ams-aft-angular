@@ -16,10 +16,6 @@ describe('retryBackoff', () => {
     global.Math.random = realRandom;
   });
 
-  beforeEach(() => {
-    rxTest = new TestScheduler((actual, expected) => expect(actual).toEqual(expected));
-  });
-
   it(`resubscribes to the observable on error with default values`, () => {
     testBackoffOperator();
   });
@@ -37,6 +33,7 @@ describe('retryBackoff', () => {
   });
 
   it(`uses custom "delay"`, () => {
+    rxTest = new TestScheduler((actual, expected) => expect(actual).toEqual(expected));
     rxTest.run(({ cold, expectObservable, expectSubscriptions }) => {
       const source = cold('#');
       const expected = '50ms #';
@@ -46,10 +43,6 @@ describe('retryBackoff', () => {
       expectObservable(result).toBe(expected);
       expectSubscriptions(source.subscriptions).toBe(subs);
     });
-  });
-
-  it(`uses custom "shouldNotRetry"`, () => {
-    testBackoffOperator({ count: 0, config: { shouldNotRetry: true } });
   });
 
   it(`uses custom "tap"`, () => {
@@ -105,6 +98,7 @@ describe('retryBackoff', () => {
         return Math.min(maxDelay, backoffDelay);
       };
 
+      rxTest = new TestScheduler((actual, expected) => expect(actual).toEqual(expected));
       rxTest.run(({ cold, expectObservable, expectSubscriptions }) => {
         const source = cold('#');
         const expected = '6100ms #';
@@ -117,18 +111,19 @@ describe('retryBackoff', () => {
     });
 
     it(`define a maximum operation time`, () => {
-      const getShouldNotRetry = (scope: RetryBackoffScope<Error> & { delay: number }) => {
+      const getShouldRetry = (scope: RetryBackoffScope<Error> & { delay: number }) => {
         const maxTime = 2_000;
-        return scope.delay + scope.totalTime > maxTime;
+        const shouldNotRetry = scope.delay + scope.totalTime > maxTime;
+        return !shouldNotRetry;
       };
 
-      testBackoffOperator({ count: 3, config: { shouldNotRetry: getShouldNotRetry } });
+      testBackoffOperator({ count: 3, config: { shouldRetry: getShouldRetry } });
     });
 
     it(`log every retry`, () => {
       const fn = jest.fn();
       const getTap = (scope: RetryBackoffScope<Error> & { delay: number }) => {
-        fn(`Retry number ${scope.retryCount}`);
+        fn(`Retry #${scope.retryCount}`);
       };
 
       expect(fn).not.toHaveBeenCalled();
@@ -136,11 +131,11 @@ describe('retryBackoff', () => {
       testBackoffOperator({ config: { tap: getTap } });
 
       expect(fn).toHaveBeenCalledTimes(5);
-      expect(fn).toHaveBeenNthCalledWith(1, 'Retry number 1');
-      expect(fn).toHaveBeenNthCalledWith(2, 'Retry number 2');
-      expect(fn).toHaveBeenNthCalledWith(3, 'Retry number 3');
-      expect(fn).toHaveBeenNthCalledWith(4, 'Retry number 4');
-      expect(fn).toHaveBeenNthCalledWith(5, 'Retry number 5');
+      expect(fn).toHaveBeenNthCalledWith(1, 'Retry #1');
+      expect(fn).toHaveBeenNthCalledWith(2, 'Retry #2');
+      expect(fn).toHaveBeenNthCalledWith(3, 'Retry #3');
+      expect(fn).toHaveBeenNthCalledWith(4, 'Retry #4');
+      expect(fn).toHaveBeenNthCalledWith(5, 'Retry #5');
     });
   });
 });
@@ -148,24 +143,30 @@ describe('retryBackoff', () => {
 function testBackoffOperator(conf?: {
   count?: number;
   base?: number;
-  config?: RetryBackoffConfig<Error>;
   error?: Error;
+  config?: RetryBackoffConfig<Error>;
 }) {
   const testScheduler = new TestScheduler((actual, expected) => expect(actual).toEqual(expected));
   const subs = ['(^!)'];
+  const merged = {
+    count: 5,
+    base: 300,
+    error: new Error(),
+    ...(conf ?? {})
+  };
+
   let numExpected = 0;
 
-  for (let i = 1; i <= (conf?.count ?? 5); i++) {
-    const delay = Math.pow(2, i - 1) * (conf?.base ?? 300);
-    numExpected = numExpected + delay;
+  for (let i = 1; i <= merged.count; i++) {
+    numExpected += Math.pow(2, i - 1) * merged.base;
     subs.push(`${numExpected}ms (^!)`);
   }
 
   return testScheduler.run(({ cold, expectObservable, expectSubscriptions }) => {
-    const source = cold('#', {}, conf?.error ?? new Error());
-    const result = source.pipe(retryBackoff(conf?.config));
+    const source = cold('#', {}, merged.error);
+    const result = source.pipe(retryBackoff(merged?.config));
 
-    expectObservable(result).toBe(`${numExpected}ms #`, {}, conf?.error ?? new Error());
+    expectObservable(result).toBe(`${numExpected}ms #`, {}, merged.error);
     expectSubscriptions(source.subscriptions).toBe(subs);
   });
 }
