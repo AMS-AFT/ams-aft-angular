@@ -1,7 +1,7 @@
 import { TestScheduler } from 'rxjs/testing';
 
 import { randomBetween } from '../utils';
-import { retryBackoff, RetryBackoffConfig, RetryBackoffScope } from './retry-backoff.operator';
+import { getBackoffDelay, retryBackoff, RetryBackoffConfig, RetryBackoffScope } from './retry-backoff.operator';
 
 const realRandom = Math.random;
 
@@ -56,79 +56,56 @@ describe('retryBackoff', () => {
   });
 
   describe('use cases', () => {
-    it(`configure the number of retries and base interval depending on the time of the day`, () => {
-      const getCount = (date: Date) => {
-        const hour = date.getHours();
-        return hour <= 6 || hour >= 20 ? 7 : 2;
-      };
+    it(`number of retries based on time of day`, () => {
+      const count = (date: Date) => (date.getHours() <= 6 ? 7 : 2);
 
-      const getBaseInterval = (date: Date) => {
-        const hour = date.getHours();
-        return hour <= 6 || hour >= 20 ? randomBetween(500, 600) : randomBetween(200, 300);
-      };
+      let date = new Date('Sun, 1 Jan 2023 1:00:00 GMT');
+      testBackoffOperator({ count: 7, config: { count: count(date) } });
 
-      let date = new Date('Sun, 1 Jan 2023 12:00:00 GMT');
-      testBackoffOperator({
-        count: 2,
-        base: 200,
-        config: { count: getCount(date), baseInterval: getBaseInterval(date) }
-      });
-
-      date = new Date('Sun, 1 Jan 2023 23:00:00 GMT');
-      testBackoffOperator({
-        count: 7,
-        base: 500,
-        config: { count: getCount(date), baseInterval: getBaseInterval(date) }
-      });
+      date = new Date('Sun, 1 Jan 2023 7:00:00 GMT');
+      testBackoffOperator({ count: 2, config: { count: count(date) } });
     });
 
-    it(`retry only on certain error types`, () => {
-      const getShouldRetry = (scope: RetryBackoffScope<Error>) => {
-        return scope.error instanceof URIError;
-      };
+    it(`base interval based on time of day`, () => {
+      const baseInterval = (date: Date) => (date.getHours() <= 6 ? randomBetween(500, 600) : randomBetween(200, 300));
 
-      testBackoffOperator({ count: 0, config: { shouldRetry: getShouldRetry } });
-      testBackoffOperator({ error: new URIError(), config: { shouldRetry: getShouldRetry } });
+      let date = new Date('Sun, 1 Jan 2023 1:00:00 GMT');
+      testBackoffOperator({ base: 500, config: { baseInterval: baseInterval(date) } });
+
+      date = new Date('Sun, 1 Jan 2023 7:00:00 GMT');
+      testBackoffOperator({ base: 200, config: { baseInterval: baseInterval(date) } });
     });
 
-    it(`define a maximum delay`, () => {
-      const getDelay = (scope: RetryBackoffScope<Error>) => {
-        const maxDelay = 2_000;
-        const backoffDelay = Math.pow(2, scope.retryCount - 1) * scope.baseInterval;
-        return Math.min(maxDelay, backoffDelay);
-      };
+    it(`set a maximum delay of 2s`, () => {
+      const delay = (scope: RetryBackoffScope<Error>) => Math.min(2_000, getBackoffDelay(scope));
 
       rxTest = new TestScheduler((actual, expected) => expect(actual).toEqual(expected));
       rxTest.run(({ cold, expectObservable, expectSubscriptions }) => {
         const source = cold('#');
         const expected = '6100ms #';
         const subs = ['(^!)', '300ms (^!)', '900ms (^!)', '2100ms (^!)', '4100ms (^!)', '6100ms (^!)'];
-        const result = source.pipe(retryBackoff({ delay: getDelay }));
+        const result = source.pipe(retryBackoff({ delay }));
 
         expectObservable(result).toBe(expected);
         expectSubscriptions(source.subscriptions).toBe(subs);
       });
     });
 
-    it(`define a maximum operation time`, () => {
-      const getShouldRetry = (scope: RetryBackoffScope<Error> & { delay: number }) => {
-        const maxTime = 2_000;
-        const shouldNotRetry = scope.delay + scope.totalTime > maxTime;
-        return !shouldNotRetry;
-      };
+    it(`retry on URIError with a max operation time of 2s`, () => {
+      const shouldRetry = (scope: RetryBackoffScope<Error> & { delay: number }) =>
+        scope.error instanceof URIError && scope.delay + scope.totalTime <= 2_000;
 
-      testBackoffOperator({ count: 3, config: { shouldRetry: getShouldRetry } });
+      testBackoffOperator({ count: 0, config: { shouldRetry } });
+      testBackoffOperator({ count: 3, error: new URIError(), config: { shouldRetry } });
     });
 
     it(`log every retry`, () => {
       const fn = jest.fn();
-      const getTap = (scope: RetryBackoffScope<Error> & { delay: number }) => {
-        fn(`Retry #${scope.retryCount}`);
-      };
+      const tap = (scope: RetryBackoffScope<Error> & { delay: number }) => fn(`Retry #${scope.retryCount}`);
 
       expect(fn).not.toHaveBeenCalled();
 
-      testBackoffOperator({ config: { tap: getTap } });
+      testBackoffOperator({ config: { tap } });
 
       expect(fn).toHaveBeenCalledTimes(5);
       expect(fn).toHaveBeenNthCalledWith(1, 'Retry #1');
