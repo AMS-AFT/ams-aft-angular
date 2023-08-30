@@ -7,8 +7,9 @@ import { retryHttpRequest } from './retry-http-request.operator';
 const realRandom = Math.random;
 const realNow = Date.now;
 
+const error = new ProgressEvent('');
 const url = 'api/resource';
-const errorNetwork = { status: 0, statusText: '', error: new ProgressEvent('') };
+const networkError = { status: 0, statusText: '' };
 const error404 = { status: 404, statusText: '' };
 const error429 = { status: 429, statusText: '', headers: { 'Retry-After': '1' } };
 const error500 = { status: 500, statusText: '' };
@@ -42,7 +43,7 @@ describe('retryHttpRequest', () => {
     httpTestingController.verify();
   });
 
-  it(`retries the HTTP request on retryable HTTP error with default values`, fakeAsync(() => {
+  it(`retry on retryable HTTP error`, fakeAsync(() => {
     httpClient
       .get(url)
       .pipe(retryHttpRequest())
@@ -76,12 +77,24 @@ describe('retryHttpRequest', () => {
       .subscribe({
         next: () => fail('should have failed with the network error'),
         error: (error: HttpErrorResponse) => {
-          expect(error.status).toEqual(errorNetwork.status);
+          expect(error.status).toEqual(networkError.status);
         }
       });
 
-    const req = httpTestingController.expectOne(url);
-    req.flush('', errorNetwork);
+    let req = httpTestingController.expectOne(url);
+    req.error(error, networkError);
+
+    tick(300);
+    req = httpTestingController.expectOne(url);
+    req.error(error, networkError);
+
+    tick(600);
+    req = httpTestingController.expectOne(url);
+    req.error(error, networkError);
+
+    tick(1200);
+    req = httpTestingController.expectOne(url);
+    req.error(error, networkError);
   }));
 
   it(`doesn't retry on non retryable HTTP error`, fakeAsync(() => {
@@ -176,7 +189,7 @@ describe('retryHttpRequest', () => {
     req.flush('', error503);
   }));
 
-  it(`uses max operation time 100 s`, fakeAsync(() => {
+  it(`uses max operation time 100s`, fakeAsync(() => {
     httpClient
       .get(url)
       .pipe(retryHttpRequest())
@@ -234,7 +247,7 @@ describe('retryHttpRequest', () => {
 
     tick(1000);
     req = httpTestingController.expectOne(url);
-    req.flush('', error500);
+    req.error(error, networkError);
 
     tick(600);
     req = httpTestingController.expectOne(url);
