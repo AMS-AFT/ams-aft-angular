@@ -8,22 +8,22 @@ describe('randomBetween', () => {
   });
 
   it(`returns a random number including min`, () => {
-    global.Math.random = jest.fn(() => 0);
+    jest.spyOn(global.Math, 'random').mockImplementation(() => 0);
     expect(randomBetween(1, 10)).toEqual(1);
   });
 
   it(`returns a random number including max`, () => {
-    global.Math.random = jest.fn(() => 0.9);
+    jest.spyOn(global.Math, 'random').mockImplementation(() => 0.9);
     expect(randomBetween(1, 10)).toEqual(10);
   });
 
   it(`parse min decimal argument to lower integer`, () => {
-    global.Math.random = jest.fn(() => 0);
+    jest.spyOn(global.Math, 'random').mockImplementation(() => 0);
     expect(randomBetween(1.1, 1.1)).toEqual(1);
   });
 
   it(`parse max decimal argument to higer integer`, () => {
-    global.Math.random = jest.fn(() => 0.9);
+    jest.spyOn(global.Math, 'random').mockImplementation(() => 0.9);
     expect(randomBetween(1.1, 1.1)).toEqual(2);
   });
 });

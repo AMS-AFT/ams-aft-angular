@@ -14,4 +14,12 @@ describe('valueOrFn', () => {
     const value = (v1: number, v2: string) => 0 + v1 + Number(v2);
     expect(valueOrFn(value, 1, '1')).toEqual(2);
   });
+
+  it(`returns null`, () => {
+    expect(valueOrFn(null)).toBeNull();
+  });
+
+  it(`returns undefined`, () => {
+    expect(valueOrFn(undefined)).toBeUndefined();
+  });
 });

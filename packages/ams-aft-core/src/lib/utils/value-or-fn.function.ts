@@ -6,6 +6,8 @@
  * @publicApi
  * @example
  * ```ts
+ * valueOrFn(null); // null
+ * valueOrFn(undefined); // undefined
  * valueOrFn(1); // 1
  * valueOrFn(() => 1); // 1
  * valueOrFn((a, b) => a + b, 1, 1); // 2
