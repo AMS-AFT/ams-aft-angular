@@ -40,11 +40,14 @@
     },
     {
       "files": ["*.spec.ts", "*.spec.tsx", "*.spec.js", "*.spec.jsx"],
-      "plugins": ["jest-extended"],
+      "plugins": ["jest-extended", "jest"],
       "env": {
         "jest": true
       },
-      "rules": {}
+      "rules": {
+        "@typescript-eslint/no-explicit-any": "off",
+        "jest/prefer-spy-on": "warn"
+      }
     }
   ]
 }
