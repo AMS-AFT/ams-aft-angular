@@ -1,15 +1,11 @@
 import { SECOND_AS_MILLISECOND } from '../utils';
 import { parseRetryAfter } from './parse-retry-after.function';
 
-const realNow = Date.now;
+const time = new Date('Sun, 1 Jan 2023 12:00:00 GMT').getTime();
 
 describe('parseRetryAfter', () => {
-  beforeAll(() => {
-    global.Date.now = jest.fn(() => new Date('Sun, 1 Jan 2023 12:00:00 GMT').getTime());
-  });
-
-  afterAll(() => {
-    global.Date.now = realNow;
+  beforeEach(() => {
+    jest.spyOn(Date, 'now').mockReturnValue(time);
   });
 
   it(`returns value in miliseconds if number`, () => {
