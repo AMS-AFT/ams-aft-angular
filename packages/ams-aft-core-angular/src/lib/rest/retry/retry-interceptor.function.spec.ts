@@ -13,7 +13,7 @@ describe('retryInterceptor Function', () => {
   let httpTestingController: HttpTestingController;
 
   beforeAll(() => {
-    global.Math.random = jest.fn(() => 0);
+    jest.spyOn(global.Math, 'random').mockImplementation(() => 0);
   });
 
   afterAll(() => {

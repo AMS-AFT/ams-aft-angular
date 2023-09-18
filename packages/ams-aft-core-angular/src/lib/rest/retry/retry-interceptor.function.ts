@@ -1,7 +1,7 @@
 import { HttpHandlerFn, HttpInterceptorFn, HttpRequest } from '@angular/common/http';
 
-import { retryInterceptorShouldRetry } from './retry.interceptor';
-import { retryHttpRequest, RetryHttpRequestConfig } from './retry-http-request.operator';
+import { RetryInterceptorConfig, toRetryHttpRequestConfig } from './retry.interceptor';
+import { retryHttpRequest } from './retry-http-request.operator';
 
 /**
  * Intercepts and handles an HttpResponse and retries it if returns a retryable HttpErrorResponse.
@@ -14,12 +14,9 @@ import { retryHttpRequest, RetryHttpRequestConfig } from './retry-http-request.o
  * @returns An interceptor for HTTP requests made via HttpClient.
  * @publicApi
  */
-export function retryInterceptor(config?: RetryHttpRequestConfig): HttpInterceptorFn {
+export function retryInterceptor(config?: RetryInterceptorConfig): HttpInterceptorFn {
   return <T>(request: HttpRequest<T>, next: HttpHandlerFn) => {
-    const merged: RetryHttpRequestConfig = {
-      shouldRetry: retryInterceptorShouldRetry(request),
-      ...(config ?? {})
-    };
+    const merged = toRetryHttpRequestConfig(request, config);
 
     return next(request).pipe(retryHttpRequest(merged));
   };

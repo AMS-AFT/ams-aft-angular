@@ -2,8 +2,8 @@ import {
   getBackoffDelay,
   parseKeepAliveTimeout,
   parseRetryAfter,
-  retryBackoff,
-  RetryBackoffConfig,
+  RetryBackoffConfigOld,
+  retryBackoffOld,
   RetryBackoffScope,
   SECOND_AS_MILLISECOND
 } from '@ams-aft/core';
@@ -22,7 +22,7 @@ export type RetryHttpRequestScope = RetryBackoffScope<HttpErrorResponse>;
  * The retryHttpRequest operator configuration object.
  * @publicApi
  */
-export interface RetryHttpRequestConfig extends RetryBackoffConfig<HttpErrorResponse> {
+export interface RetryHttpRequestConfig extends RetryBackoffConfigOld<HttpErrorResponse> {
   /**
    * The maximum number of times to retry.
    *
@@ -62,7 +62,34 @@ export interface RetryHttpRequestConfig extends RetryBackoffConfig<HttpErrorResp
  * @publicApi
  * @example
  * ```ts
- * httpClient.get('/resource').pipe(retryHttpRequest()).subscribe()
+ * httpClient.get('/api').pipe(retryHttpRequest())
+ * httpClient.get('/api').pipe(retryHttpRequest({ count, baseInterval, delay, shouldRetry, tap }))
+ *
+ * // Number of retries based on time of day
+ * function count(): number {
+ *   return Date.now().getHours() <= 6 ? 4 : 2;
+ * }
+ * // Base interval based on time of day
+ * function baseInterval(): number {
+ *   return Date.now().getHours() <= 6 ? randomBetween(500, 600) : randomBetween(200, 300);
+ * }
+ * // Set a maximum delay of 1s if no Retry-After
+ * function delay(scope: RetryHttpRequestScope): number {
+ *   const retryAfter = parseRetryAfter(scope.error.headers.get('Retry-After'));
+ *   return retryAfter ?? Math.min(1_000, getBackoffDelay(scope));
+ * }
+ * // Retry on timeout errors with a max operation time defined by Keep-Alive or 1s, whichever is lower
+ * function shouldRetry(scope: RetryHttpRequestScope & { delay: number }): boolean {
+ *    const keepAlive = parseKeepAliveTimeout(scope.error.headers.get('Keep-Alive'));
+ *    const maxTotal = keepAlive != null ? Math.min(keepAlive, 1_000) : 1_000;
+ *    const should = [408, 504, 524].includes(scope.error.status) || isClientNetworkError(scope.error);
+ *    const shouldnt = scope.totalTime + scope.delay > maxTotal;
+ *    return should && !shouldnt;
+ * }
+ * // Log on every retry
+ * function tap(scope: RetryHttpRequestScope & { delay: number }) {
+ *   console.log(`Retry #${scope.retryCount}`);
+ * }
  * ```
  */
 export function retryHttpRequest<T>(config?: RetryHttpRequestConfig): MonoTypeOperatorFunction<T> {
@@ -73,7 +100,7 @@ export function retryHttpRequest<T>(config?: RetryHttpRequestConfig): MonoTypeOp
     ...(config ?? {})
   };
 
-  return retryBackoff(merged);
+  return retryBackoffOld(merged);
 }
 
 /**
@@ -96,7 +123,7 @@ export function retryHttpRequestDelay(scope: RetryHttpRequestScope): number {
  * of 100s or the value of the Keep-Alive's HTTP header timeout value, whichever is lower.
  * @protected
  */
-export function retryHttpRequestShouldRetry(scope: RetryHttpRequestScope & { delay: number }) {
+export function retryHttpRequestShouldRetry(scope: RetryHttpRequestScope & { delay: number }): boolean {
   const maxTime = 100 * SECOND_AS_MILLISECOND;
   const keepAlive = parseKeepAliveTimeout(scope.error.headers.get('Keep-Alive'));
   const maxTotal = keepAlive != null ? Math.min(keepAlive, maxTime) : maxTime;
