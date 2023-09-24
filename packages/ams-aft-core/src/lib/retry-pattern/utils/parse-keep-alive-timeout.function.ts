@@ -1,4 +1,4 @@
-import { SECOND_AS_MILLISECOND, stringToObject } from '../utils';
+import { SECOND_AS_MILLISECOND, stringToObject } from '../../utils';
 
 /**
  * Returns the Keep-Alive HTTP header timeout value in milliseconds.

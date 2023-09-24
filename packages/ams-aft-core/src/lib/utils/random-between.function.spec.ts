@@ -1,10 +1,8 @@
 import { randomBetween } from './random-between.function';
 
-const realRandom = Math.random;
-
 describe('randomBetween', () => {
-  afterAll(() => {
-    global.Math.random = realRandom;
+  beforeEach(() => {
+    jest.spyOn(global.Math, 'random').mockImplementation(() => 0.999);
   });
 
   it(`returns a random number including min`, () => {
@@ -13,8 +11,11 @@ describe('randomBetween', () => {
   });
 
   it(`returns a random number including max`, () => {
-    jest.spyOn(global.Math, 'random').mockImplementation(() => 0.9);
     expect(randomBetween(1, 10)).toEqual(10);
+  });
+
+  it(`returns min number if max < min`, () => {
+    expect(randomBetween(10, 9)).toEqual(10);
   });
 
   it(`parse min decimal argument to lower integer`, () => {
@@ -23,7 +24,6 @@ describe('randomBetween', () => {
   });
 
   it(`parse max decimal argument to higer integer`, () => {
-    jest.spyOn(global.Math, 'random').mockImplementation(() => 0.9);
     expect(randomBetween(1.1, 1.1)).toEqual(2);
   });
 });

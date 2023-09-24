@@ -1,4 +1,4 @@
-import { SECOND_AS_MILLISECOND } from '../utils';
+import { SECOND_AS_MILLISECOND } from '../../utils';
 
 /**
  * Returns the Retry-After response HTTP header value in milliseconds.

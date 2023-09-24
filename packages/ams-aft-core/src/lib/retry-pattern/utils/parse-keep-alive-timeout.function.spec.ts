@@ -1,4 +1,4 @@
-import { SECOND_AS_MILLISECOND } from '../utils';
+import { SECOND_AS_MILLISECOND } from '../../utils';
 import { parseKeepAliveTimeout } from './parse-keep-alive-timeout.function';
 
 describe('parseKeepAliveTimeout', () => {

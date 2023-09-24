@@ -1,4 +1,4 @@
-import { SECOND_AS_MILLISECOND } from '../utils';
+import { SECOND_AS_MILLISECOND } from '../../utils';
 import { parseRetryAfter } from './parse-retry-after.function';
 
 const time = new Date('Sun, 1 Jan 2023 12:00:00 GMT').getTime();
